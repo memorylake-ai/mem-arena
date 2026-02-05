@@ -1,5 +1,5 @@
 export interface ProviderOption {
-  /** Model id used by API (e.g. gpt-5.2, claude-4.5-sonnet). */
+  /** Model id used by API (e.g. gpt-5.2, claude-sonnet-4-5-20250929). */
   providerId: string;
   displayName: string;
   /** Group label for select dropdown (e.g. Anthropic, OpenAI). */
@@ -40,16 +40,16 @@ export function getProviders(): ProviderOption[] {
 export const MODEL_IDS = [
   "gpt-5.2",
   "gpt-5-mini",
-  "claude-4.5-sonnet",
-  "claude-4.5-haiku",
+  "claude-sonnet-4-5-20250929",
+  "claude-haiku-4-5-20251001",
 ] as const;
 
 export type ModelId = (typeof MODEL_IDS)[number];
 
 export const OPENAI_MODELS: ModelId[] = ["gpt-5.2", "gpt-5-mini"];
 export const ANTHROPIC_MODELS: ModelId[] = [
-  "claude-4.5-sonnet",
-  "claude-4.5-haiku",
+  "claude-sonnet-4-5-20250929",
+  "claude-haiku-4-5-20251001",
 ];
 
 export function isOpenAIModel(
