@@ -22,16 +22,16 @@ export function dtoToUIMessage(d: SessionMessageDTO): ChatUIMessage {
       ? d.metadata.isError
       : undefined;
   const textPart: ChatUIMessagePart = { type: "text", text: d.content };
-  const fileParts: ChatUIMessagePart[] = Array.isArray(d.attachments)
+  const fileRefParts: ChatUIMessagePart[] = Array.isArray(d.attachments)
     ? d.attachments.map((a) => ({
-        type: "file" as const,
-        ...parseAttachment(a),
+        type: "data-file-ref" as const,
+        data: parseAttachment(a),
       }))
     : [];
   return {
     id: d.id,
     role: d.role,
-    parts: [textPart, ...fileParts],
+    parts: [textPart, ...fileRefParts],
     ...(d.agentId != null || d.providerId != null || isError !== undefined
       ? {
           metadata: {

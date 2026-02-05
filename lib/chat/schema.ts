@@ -7,11 +7,23 @@ export const userIdHeaderSchema = z
   .string()
   .min(1, "X-User-ID header required");
 
-/** Part of a chat message (type + optional text). */
-const messagePartSchema = z.object({
-  type: z.string(),
-  text: z.string().optional(),
+/** Data shape for data-file-ref part (file reference, not sent to model by default). */
+export const dataFileRefSchema = z.object({
+  object_key: z.string().optional(),
+  url: z.string().optional(),
+  filename: z.string().optional(),
+  mimeType: z.string().optional(),
+  size: z.number().optional(),
 });
+
+/** Part of a chat message: text (for model) or data-file-ref (UI-only, AI SDK data part). */
+const messagePartSchema = z.union([
+  z.object({ type: z.literal("text"), text: z.string().optional() }),
+  z.object({
+    type: z.literal("data-file-ref"),
+    data: dataFileRefSchema,
+  }),
+]);
 
 /** Output type for one message part (for extractTextFromMessage and route). */
 export type ChatMessagePartOutput = z.output<typeof messagePartSchema>;

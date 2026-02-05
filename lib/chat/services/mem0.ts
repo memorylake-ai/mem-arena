@@ -1,6 +1,6 @@
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { createMem0 } from "@mem0/vercel-ai-provider";
-import { streamText } from "ai";
+import { convertToModelMessages, streamText } from "ai";
 import type { ChatStreamParams, ChatStreamWriter } from "@/lib/chat/types";
 import { isOpenAIModel } from "@/lib/config";
 
@@ -21,14 +21,16 @@ function getMem0Model(modelId: string, userId: string): LanguageModelV2 {
   return mem0(modelId, { user_id: userId }) as unknown as LanguageModelV2;
 }
 
-export function streamMem0(
+/** Data parts (e.g. data-file-ref) are filtered out by default and not sent to the model. */
+export async function streamMem0(
   writer: ChatStreamWriter,
   params: ChatStreamParams
-): void {
+): Promise<void> {
+  const modelMessages = await convertToModelMessages(params.messages);
   const model = getMem0Model(params.modelId, params.userId);
   const result = streamText({
     model,
-    messages: params.modelMessages,
+    messages: modelMessages,
   });
   const uiStream = result.toUIMessageStream({
     messageMetadata: () => ({ agentId: params.agentId }),

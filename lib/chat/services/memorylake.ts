@@ -1,11 +1,13 @@
+import { convertToModelMessages } from "ai";
 import type { ChatStreamParams, ChatStreamWriter } from "@/lib/chat/types";
 import { parseMemorylakeProfile } from "@/lib/memorylake/profile";
 import { streamMemoryLakeToUIMessageStream } from "@/lib/memorylake/stream";
 
-export function streamMemoryLake(
+/** Data parts (e.g. data-file-ref) are filtered out by default and not sent to the model. */
+export async function streamMemoryLake(
   writer: ChatStreamWriter,
   params: ChatStreamParams
-): void {
+): Promise<void> {
   const baseUrl = process.env.ZOOTOPIA_API;
   const apiKey = process.env.ZOOTOPIA_API_KEY;
   if (!(baseUrl && apiKey)) {
@@ -16,10 +18,11 @@ export function streamMemoryLake(
     });
     return;
   }
+  const modelMessages = await convertToModelMessages(params.messages);
   const memorylakeProfile = parseMemorylakeProfile(params.memorylakeProfile);
   const uiStream = streamMemoryLakeToUIMessageStream({
     modelId: params.modelId,
-    messages: params.modelMessages,
+    messages: modelMessages,
     messageId: params.assistantMessageId,
     messageMetadata: { agentId: params.agentId },
     ...(memorylakeProfile && { memorylakeProfile }),

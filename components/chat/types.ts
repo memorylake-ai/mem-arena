@@ -31,18 +31,21 @@ export interface ChatUIMessageTextPart {
   text: string;
 }
 
-/** File/attachment part in a chat message (display-only; object_key for API). */
-export interface ChatUIMessageFilePart {
-  type: "file";
-  filename?: string;
-  object_key?: string;
-  /** File size in bytes. */
-  size?: number;
-  /** MIME type (e.g. image/png). */
-  mimeType?: string;
+/** File reference as AI SDK data part (UI-only, not sent to model by default). */
+export interface ChatUIMessageDataFileRefPart {
+  type: "data-file-ref";
+  data: {
+    object_key?: string;
+    url?: string;
+    filename?: string;
+    mimeType?: string;
+    size?: number;
+  };
 }
 
-export type ChatUIMessagePart = ChatUIMessageTextPart | ChatUIMessageFilePart;
+export type ChatUIMessagePart =
+  | ChatUIMessageTextPart
+  | ChatUIMessageDataFileRefPart;
 
 export interface ChatUIMessage {
   id: string;

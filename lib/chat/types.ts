@@ -1,12 +1,13 @@
-import type { ModelMessage } from "@ai-sdk/provider-utils";
+import type { UIMessage } from "ai";
 import type { AgentId } from "@/lib/db/schema";
 
-/** Parameters passed to each agent stream function. */
+/** Parameters passed to each agent stream function. Messages are converted to model messages inside each service. */
 export interface ChatStreamParams {
   agentId: AgentId;
   modelId: string;
   userId: string;
-  modelMessages: ModelMessage[];
+  /** Full UI messages (including data-file-ref parts). Each service calls convertToModelMessages. */
+  messages: UIMessage[];
   assistantMessageId: string;
   memorylakeProfile?: unknown;
 }

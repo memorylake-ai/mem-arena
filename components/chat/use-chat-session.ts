@@ -238,17 +238,21 @@ export function useChatSession() {
         attachments
       );
       const textPart: ChatUIMessagePart = { type: "text", text };
-      const fileParts: ChatUIMessagePart[] = (attachments ?? []).map((a) => ({
-        type: "file",
-        filename: a.filename,
-        object_key: a.object_key,
-        size: a.size,
-        mimeType: a.mimeType,
-      }));
+      const fileRefParts: ChatUIMessagePart[] = (attachments ?? []).map(
+        (a) => ({
+          type: "data-file-ref",
+          data: {
+            object_key: a.object_key,
+            filename: a.filename,
+            size: a.size,
+            mimeType: a.mimeType,
+          },
+        })
+      );
       const userMsg: ChatUIMessage = {
         id: userMessageId,
         role: "user",
-        parts: [textPart, ...fileParts],
+        parts: [textPart, ...fileRefParts],
       };
       const setters = setMessagesRefs.current;
       const senders = sendMessageRefs.current;
@@ -383,17 +387,19 @@ export function useChatSession() {
         attachments.length ? attachments : undefined
       );
       const textPart: ChatUIMessagePart = { type: "text", text };
-      const fileParts: ChatUIMessagePart[] = attachments.map((a) => ({
-        type: "file",
-        filename: a.filename,
-        object_key: a.object_key,
-        size: a.size,
-        mimeType: a.mimeType,
+      const fileRefParts: ChatUIMessagePart[] = attachments.map((a) => ({
+        type: "data-file-ref",
+        data: {
+          object_key: a.object_key,
+          filename: a.filename,
+          size: a.size,
+          mimeType: a.mimeType,
+        },
       }));
       const userMsg: ChatUIMessage = {
         id: userMessageId,
         role: "user",
-        parts: [textPart, ...fileParts],
+        parts: [textPart, ...fileRefParts],
       };
       for (const c of chats) {
         c.setMessages((prev) => [...prev, userMsg] as typeof prev);

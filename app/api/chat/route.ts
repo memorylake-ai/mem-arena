@@ -1,12 +1,10 @@
 import type { UIMessage } from "ai";
 import {
-  convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
 } from "ai";
 import {
-  type ChatBodyOutput,
   type ChatMessagePartOutput,
   checkLastMessageIsUser,
   parseChatBody,
@@ -16,8 +14,6 @@ import { streamAgent } from "@/lib/chat/services";
 import type { ChatStreamWriter } from "@/lib/chat/types";
 import { extractTextFromMessage } from "@/lib/chat/utils";
 import { createMessage, updateMessageContent, updateSession } from "@/lib/db";
-
-type ParsedMessage = ChatBodyOutput["messages"][number];
 
 export async function POST(req: Request) {
   const userIdResult = userIdHeaderSchema.safeParse(
@@ -85,32 +81,18 @@ export async function POST(req: Request) {
     replyToMessageId: userMessageId,
   });
 
-  const messagesForModel = messages.map((msg: ParsedMessage) => ({
-    ...msg,
-    parts: [
-      {
-        type: "text" as const,
-        text: extractTextFromMessage(msg.parts),
-      },
-    ],
-  }));
-
-  const modelMessages = await convertToModelMessages(
-    messagesForModel as Omit<import("ai").UIMessage, "id">[]
-  );
-
-  const streamParams = {
+  const streamParams: Parameters<typeof streamAgent>[1] = {
     agentId,
     modelId,
     userId,
-    modelMessages,
+    messages: messages as UIMessage[],
     assistantMessageId,
     memorylakeProfile: parsed.memorylakeProfile,
   };
 
   const stream = createUIMessageStream({
-    execute: ({ writer }) => {
-      streamAgent(writer as ChatStreamWriter, streamParams);
+    execute: async ({ writer }) => {
+      await streamAgent(writer as ChatStreamWriter, streamParams);
     },
     originalMessages: messages as Parameters<
       typeof createUIMessageStream

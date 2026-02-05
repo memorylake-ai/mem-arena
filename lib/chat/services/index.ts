@@ -5,26 +5,27 @@ import { streamSupermemory } from "./supermemory";
 
 /**
  * Dispatch to the appropriate agent stream by agentId.
+ * Each service converts UI messages to model messages internally.
  */
-export function streamAgent(
+export async function streamAgent(
   writer: ChatStreamWriter,
   params: ChatStreamParams
-): void {
+): Promise<void> {
   switch (params.agentId) {
     case "memorylake":
-      streamMemoryLake(writer, params);
+      await streamMemoryLake(writer, params);
       break;
     case "mem0":
-      streamMem0(writer, params);
+      await streamMem0(writer, params);
       break;
     case "supermemory":
-      streamSupermemory(writer, params);
+      await streamSupermemory(writer, params);
       break;
     default: {
-      const _: never = params.agentId;
+      const exhausted: never = params.agentId;
       writer.write({
         type: "error",
-        errorText: `Unknown agent: ${String((params as { agentId: string }).agentId)}`,
+        errorText: `Unknown agent: ${String(exhausted)}`,
       });
     }
   }

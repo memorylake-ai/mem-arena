@@ -2,7 +2,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { withSupermemory } from "@supermemory/tools/ai-sdk";
-import { streamText } from "ai";
+import { convertToModelMessages, streamText } from "ai";
 import type { ChatStreamParams, ChatStreamWriter } from "@/lib/chat/types";
 import { isOpenAIModel } from "@/lib/config";
 
@@ -31,14 +31,16 @@ function getSupermemoryModel(modelId: string, userId: string): LanguageModelV2 {
   ) as unknown as LanguageModelV2;
 }
 
-export function streamSupermemory(
+/** Data parts (e.g. data-file-ref) are filtered out by default and not sent to the model. */
+export async function streamSupermemory(
   writer: ChatStreamWriter,
   params: ChatStreamParams
-): void {
+): Promise<void> {
+  const modelMessages = await convertToModelMessages(params.messages);
   const model = getSupermemoryModel(params.modelId, params.userId);
   const result = streamText({
     model,
-    messages: params.modelMessages,
+    messages: modelMessages,
   });
   const uiStream = result.toUIMessageStream({
     messageMetadata: () => ({ agentId: params.agentId }),

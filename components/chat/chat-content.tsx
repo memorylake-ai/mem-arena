@@ -7,7 +7,7 @@ import { AGENT_IDS } from "@/lib/agents";
 import { AgentCellContent } from "./agent-cell";
 import { AGENT_ICON_PATHS, AGENT_LABELS } from "./constants";
 import { FileDisplay } from "./file-display";
-import type { ChatUIMessage, ChatUIMessageFilePart } from "./types";
+import type { ChatUIMessage, ChatUIMessageDataFileRefPart } from "./types";
 
 export interface ChatContentProps {
   rounds: {
@@ -46,22 +46,23 @@ export function ChatContent({ rounds, chats }: ChatContentProps) {
                       .join("")}
                   </span>
                 )}
-                {round.user.parts.filter((p) => p.type === "file").length >
-                  0 && (
+                {round.user.parts.filter((p) => p.type === "data-file-ref")
+                  .length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {(
-                      round.user.parts.filter(
-                        (p): p is ChatUIMessageFilePart => p.type === "file"
-                      ) as ChatUIMessageFilePart[]
-                    ).map((p, i) => (
-                      <FileDisplay
-                        className="bg-background"
-                        filename={p.filename ?? "File"}
-                        key={p.filename ?? p.object_key ?? i}
-                        mimeType={p.mimeType}
-                        size={p.size}
-                      />
-                    ))}
+                    {round.user.parts
+                      .filter(
+                        (p): p is ChatUIMessageDataFileRefPart =>
+                          p.type === "data-file-ref"
+                      )
+                      .map((p, i) => (
+                        <FileDisplay
+                          className="bg-background"
+                          filename={p.data.filename ?? "File"}
+                          key={p.data.filename ?? p.data.object_key ?? i}
+                          mimeType={p.data.mimeType}
+                          size={p.data.size}
+                        />
+                      ))}
                   </div>
                 )}
               </div>
