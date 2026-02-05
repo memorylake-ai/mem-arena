@@ -3,14 +3,15 @@ import type { AgentId } from "@/lib/db/schema";
 import type { ChatUIMessage, ChatUIMessagePart } from "./types";
 
 function parseAttachment(a: Record<string, unknown>): {
+  drive_item_id?: string;
   filename?: string;
-  object_key?: string;
   size?: number;
   mimeType?: string;
 } {
   return {
+    drive_item_id:
+      typeof a.drive_item_id === "string" ? a.drive_item_id : undefined,
     filename: typeof a.filename === "string" ? a.filename : undefined,
-    object_key: typeof a.object_key === "string" ? a.object_key : undefined,
     size: typeof a.size === "number" ? a.size : undefined,
     mimeType: typeof a.mimeType === "string" ? a.mimeType : undefined,
   };

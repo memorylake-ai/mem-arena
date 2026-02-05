@@ -18,14 +18,14 @@ export type SetUploadStatus = (
 
 /**
  * Create document for one attachment, then poll status until memorylake_status is terminal.
- * Returns error message on failure.
+ * Returns { drive_item_id } on success, or error message string on failure.
  */
 async function createAndPollOne(
   attachment: DocumentAttachment,
   userId: string,
   projectId: string,
   basePath: string
-): Promise<string | null> {
+): Promise<{ drive_item_id: string } | string> {
   const file_name =
     attachment.filename ?? attachment.object_key.split("/").pop() ?? "file";
   const createRes = await fetch(`${basePath}/api/arena/documents`, {
@@ -47,9 +47,13 @@ async function createAndPollOne(
       `Create document failed (${createRes.status})`;
     return msg;
   }
-  const { memorylake_document_id, supermemory_document_id } = createJson.data;
+  const { drive_item_id, memorylake_document_id, supermemory_document_id } =
+    createJson.data;
   if (!(memorylake_document_id && supermemory_document_id)) {
     return "Create document response missing memorylake_document_id or supermemory_document_id";
+  }
+  if (!drive_item_id) {
+    return "Create document response missing drive_item_id";
   }
 
   const statusUrl = `${basePath}/api/arena/documents/status?memorylake_document_id=${encodeURIComponent(memorylake_document_id)}&supermemory_document_id=${encodeURIComponent(supermemory_document_id)}`;
@@ -62,7 +66,7 @@ async function createAndPollOne(
     const memorylake_status = statusJson.data?.memorylake_status;
 
     if (memorylake_status === "okay") {
-      return null; // success
+      return { drive_item_id };
     }
     if (memorylake_status === "error" || memorylake_status === "invalid") {
       return `Document processing failed (memorylake_status: ${memorylake_status})`;
@@ -83,27 +87,37 @@ export interface EnsureDocumentsReadyOptions {
 
 /**
  * For each attachment: create document then poll until memorylake_status is okay (or error/invalid).
- * Returns { ok: true } when all succeed, or { ok: false, error: string } on first failure.
+ * Returns { ok: true, driveItemIds } when all succeed (ids in same order as attachments),
+ * or { ok: false, error: string } on first failure.
  */
 export async function ensureDocumentsReady(
   options: EnsureDocumentsReadyOptions
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; driveItemIds: string[] } | { ok: false; error: string }
+> {
   const { userId, projectId, attachments, setUploadStatus } = options;
   if (!projectId?.trim()) {
     return { ok: false, error: "Arena profile or project is missing" };
   }
   if (!attachments.length) {
-    return { ok: true };
+    return { ok: true, driveItemIds: [] };
   }
   setUploadStatus?.("processing");
   const basePath = getBasePath();
+  const driveItemIds: string[] = [];
   for (const attachment of attachments) {
-    const err = await createAndPollOne(attachment, userId, projectId, basePath);
-    if (err) {
+    const result = await createAndPollOne(
+      attachment,
+      userId,
+      projectId,
+      basePath
+    );
+    if (typeof result === "string") {
       setUploadStatus?.("error");
-      return { ok: false, error: err };
+      return { ok: false, error: result };
     }
+    driveItemIds.push(result.drive_item_id);
   }
   setUploadStatus?.("done");
-  return { ok: true };
+  return { ok: true, driveItemIds };
 }

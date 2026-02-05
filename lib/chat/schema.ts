@@ -9,20 +9,23 @@ export const userIdHeaderSchema = z
 
 /** Data shape for data-file-ref part (file reference, not sent to model by default). */
 export const dataFileRefSchema = z.object({
-  object_key: z.string().optional(),
+  drive_item_id: z.string().optional(),
   url: z.string().optional(),
   filename: z.string().optional(),
   mimeType: z.string().optional(),
   size: z.number().optional(),
 });
 
-/** Part of a chat message: text (for model) or data-file-ref (UI-only, AI SDK data part). */
+/** Part of a chat message: text, data-file-ref (user), or AI SDK stream parts (step-start, reasoning, etc.). */
 const messagePartSchema = z.union([
-  z.object({ type: z.literal("text"), text: z.string().optional() }),
+  z
+    .object({ type: z.literal("text"), text: z.string().optional() })
+    .passthrough(),
   z.object({
     type: z.literal("data-file-ref"),
     data: dataFileRefSchema,
   }),
+  z.object({ type: z.string() }).passthrough(),
 ]);
 
 /** Output type for one message part (for extractTextFromMessage and route). */

@@ -69,3 +69,65 @@ export function isAnthropicModel(
 export function isSupportedModelId(value: string): value is ModelId {
   return MODEL_IDS.includes(value as ModelId);
 }
+
+/**
+ * Provider identifier for file-URL support rules (matches mem0/createMem0 provider).
+ */
+export type FileUrlProvider = "openai" | "anthropic";
+
+/**
+ * Whether the given provider supports file parts via URL for the given media type.
+ * Rules are derived from AI SDK converter implementations:
+ * - OpenAI: @ai-sdk/openai convert-to-openai-chat-messages.ts — image/* uses URL or base64;
+ *   audio/* and application/pdf throw UnsupportedFunctionalityError for URL (base64 only).
+ * - Anthropic: @ai-sdk/anthropic convert-to-anthropic-messages-prompt.ts — image/*,
+ *   application/pdf, and text/plain accept source.type 'url' or base64.
+ */
+export function providerSupportsFileUrl(
+  provider: FileUrlProvider,
+  mediaType: string
+): boolean {
+  const mt = mediaType.toLowerCase().trim();
+  if (provider === "openai") {
+    return mt.startsWith("image/");
+  }
+  if (provider === "anthropic") {
+    return (
+      mt.startsWith("image/") || mt === "application/pdf" || mt === "text/plain"
+    );
+  }
+  return false;
+}
+
+/** Resolve provider from modelId for file URL support (matches mem0 getMem0Model). */
+export function getFileUrlProvider(modelId: string): FileUrlProvider {
+  return isOpenAIModel(modelId) ? "openai" : "anthropic";
+}
+
+/**
+ * Whether the given provider supports this file media type at all (URL or base64).
+ * Derived from AI SDK: OpenAI accepts image/*, audio/wav|mp3|mpeg, application/pdf;
+ * Anthropic accepts image/*, application/pdf, text/plain. All other types (e.g. text/csv,
+ * text/markdown, Excel) throw UnsupportedFunctionalityError.
+ */
+export function providerSupportsFileType(
+  provider: FileUrlProvider,
+  mediaType: string
+): boolean {
+  const mt = mediaType.toLowerCase().trim();
+  if (provider === "openai") {
+    if (mt.startsWith("image/")) {
+      return true;
+    }
+    if (mt.startsWith("audio/")) {
+      return mt === "audio/wav" || mt === "audio/mp3" || mt === "audio/mpeg";
+    }
+    return mt === "application/pdf";
+  }
+  if (provider === "anthropic") {
+    return (
+      mt.startsWith("image/") || mt === "application/pdf" || mt === "text/plain"
+    );
+  }
+  return false;
+}

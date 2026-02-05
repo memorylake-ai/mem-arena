@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Message,
   MessageContent,
@@ -21,11 +21,7 @@ export function AgentCellContent({
 }: AgentCellContentProps) {
   if (errorText) {
     return (
-      <div
-        className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-destructive text-sm"
-        role="alert"
-      >
-        <AlertCircle className="mt-0.5 size-4 shrink-0" />
+      <div className="text-sm" role="alert">
         <span>{errorText}</span>
       </div>
     );

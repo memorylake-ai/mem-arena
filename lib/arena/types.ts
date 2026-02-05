@@ -23,3 +23,13 @@ export interface DocumentStatusResponse {
   };
   error_code?: string | null;
 }
+
+/** Response from Get Item Download URL API (Arena). */
+export interface GetItemDownloadUrlResponse {
+  success?: boolean;
+  message?: string;
+  data?: {
+    download_url?: string;
+    headers?: Record<string, string>;
+  };
+}

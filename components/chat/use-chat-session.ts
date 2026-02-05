@@ -30,20 +30,39 @@ import type {
 import { uploadMessageFiles } from "./upload";
 import { dtoToUIMessage, partitionSessionMessages } from "./utils";
 
+/** Upload result shape (has object_key for Create Document only). */
+interface UploadAttachment {
+  object_key: string;
+  filename?: string;
+  size?: number;
+  mimeType?: string;
+}
+
 async function runEnsureDocumentsReady(
-  attachments: { object_key: string; filename?: string }[],
+  attachments: UploadAttachment[],
   profile: { projId?: string } | null,
   userId: string | undefined,
   setUploadStatus: (s: UploadStatus) => void,
   setUploadError: (e: string | null) => void
-): Promise<boolean> {
+): Promise<
+  | {
+      ok: true;
+      attachmentsWithDriveId: {
+        drive_item_id?: string;
+        filename?: string;
+        size?: number;
+        mimeType?: string;
+      }[];
+    }
+  | { ok: false }
+> {
   if (attachments.length === 0) {
-    return true;
+    return { ok: true, attachmentsWithDriveId: [] };
   }
   const projectId = profile?.projId;
   if (!projectId?.trim()) {
     setUploadError("Arena profile or project is missing");
-    return false;
+    return { ok: false };
   }
   const result = await ensureDocumentsReady({
     userId: userId ?? "",
@@ -56,9 +75,15 @@ async function runEnsureDocumentsReady(
   });
   if (!result.ok) {
     setUploadError(result.error);
-    return false;
+    return { ok: false };
   }
-  return true;
+  const attachmentsWithDriveId = attachments.map((a, i) => ({
+    drive_item_id: result.driveItemIds[i],
+    filename: a.filename,
+    size: a.size,
+    mimeType: a.mimeType,
+  }));
+  return { ok: true, attachmentsWithDriveId };
 }
 
 export function useChatSession() {
@@ -242,7 +267,7 @@ export function useChatSession() {
         (a) => ({
           type: "data-file-ref",
           data: {
-            object_key: a.object_key,
+            drive_item_id: a.drive_item_id,
             filename: a.filename,
             size: a.size,
             mimeType: a.mimeType,
@@ -351,16 +376,17 @@ export function useChatSession() {
         throw new Error("Upload failed");
       }
 
-      const documentsOk = await runEnsureDocumentsReady(
+      const documentsResult = await runEnsureDocumentsReady(
         attachments,
         profile,
         user?.id,
         setUploadStatus,
         setUploadError
       );
-      if (!documentsOk) {
+      if (!documentsResult.ok) {
         throw new Error("Documents not ready");
       }
+      const { attachmentsWithDriveId } = documentsResult;
 
       if (!sessionId) {
         const { id } = await createSession();
@@ -371,7 +397,9 @@ export function useChatSession() {
             JSON.stringify({
               providerId,
               text,
-              ...(attachments.length ? { attachments } : {}),
+              ...(attachmentsWithDriveId.length
+                ? { attachments: attachmentsWithDriveId }
+                : {}),
             } satisfies PendingStreams)
           );
         } catch {
@@ -384,18 +412,20 @@ export function useChatSession() {
       const { userMessageId } = await saveUserMessage(
         sessionId,
         text,
-        attachments.length ? attachments : undefined
+        attachmentsWithDriveId.length ? attachmentsWithDriveId : undefined
       );
       const textPart: ChatUIMessagePart = { type: "text", text };
-      const fileRefParts: ChatUIMessagePart[] = attachments.map((a) => ({
-        type: "data-file-ref",
-        data: {
-          object_key: a.object_key,
-          filename: a.filename,
-          size: a.size,
-          mimeType: a.mimeType,
-        },
-      }));
+      const fileRefParts: ChatUIMessagePart[] = attachmentsWithDriveId.map(
+        (a) => ({
+          type: "data-file-ref",
+          data: {
+            drive_item_id: a.drive_item_id,
+            filename: a.filename,
+            size: a.size,
+            mimeType: a.mimeType,
+          },
+        })
+      );
       const userMsg: ChatUIMessage = {
         id: userMessageId,
         role: "user",

@@ -13,7 +13,12 @@ import {
 import { streamAgent } from "@/lib/chat/services";
 import type { ChatStreamWriter } from "@/lib/chat/types";
 import { extractTextFromMessage } from "@/lib/chat/utils";
-import { createMessage, updateMessageContent, updateSession } from "@/lib/db";
+import {
+  createMessage,
+  updateMessage,
+  updateMessageContent,
+  updateSession,
+} from "@/lib/db";
 
 export async function POST(req: Request) {
   const userIdResult = userIdHeaderSchema.safeParse(
@@ -88,6 +93,12 @@ export async function POST(req: Request) {
     messages: messages as UIMessage[],
     assistantMessageId,
     memorylakeProfile: parsed.memorylakeProfile,
+    onStreamError: async (errorText) => {
+      await updateMessage(assistantMessageId, {
+        content: errorText,
+        metadata: { isError: true },
+      });
+    },
   };
 
   const stream = createUIMessageStream({

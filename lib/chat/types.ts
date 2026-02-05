@@ -10,6 +10,8 @@ export interface ChatStreamParams {
   messages: UIMessage[];
   assistantMessageId: string;
   memorylakeProfile?: unknown;
+  /** When set, stream errors (e.g. unsupported file type) are persisted so they survive reload. */
+  onStreamError?: (errorText: string) => void | Promise<void>;
 }
 
 /**

@@ -105,7 +105,7 @@ export async function deleteSession(
 // ---------------------------------------------------------------------------
 
 export interface AttachmentInput {
-  object_key: string;
+  drive_item_id?: string;
   filename?: string;
   /** File size in bytes. */
   size?: number;
@@ -122,7 +122,7 @@ export async function saveUserMessage(
   const attachmentsPayload =
     attachments?.length &&
     attachments.map((a) => ({
-      object_key: a.object_key,
+      ...(a.drive_item_id != null ? { drive_item_id: a.drive_item_id } : {}),
       ...(a.filename != null ? { filename: a.filename } : {}),
       ...(a.size != null ? { size: a.size } : {}),
       ...(a.mimeType != null ? { mimeType: a.mimeType } : {}),

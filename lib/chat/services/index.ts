@@ -23,10 +23,9 @@ export async function streamAgent(
       break;
     default: {
       const exhausted: never = params.agentId;
-      writer.write({
-        type: "error",
-        errorText: `Unknown agent: ${String(exhausted)}`,
-      });
+      const errorText = `Unknown agent: ${String(exhausted)}`;
+      writer.write({ type: "error", errorText });
+      await params.onStreamError?.(errorText);
     }
   }
 }

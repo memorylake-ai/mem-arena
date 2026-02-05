@@ -11,11 +11,10 @@ export async function streamMemoryLake(
   const baseUrl = process.env.ZOOTOPIA_API;
   const apiKey = process.env.ZOOTOPIA_API_KEY;
   if (!(baseUrl && apiKey)) {
-    writer.write({
-      type: "error",
-      errorText:
-        "Memory Lake is not configured (ZOOTOPIA_API, ZOOTOPIA_API_KEY)",
-    });
+    const errorText =
+      "Memory Lake is not configured (ZOOTOPIA_API, ZOOTOPIA_API_KEY)";
+    writer.write({ type: "error", errorText });
+    await params.onStreamError?.(errorText);
     return;
   }
   const modelMessages = await convertToModelMessages(params.messages);

@@ -58,7 +58,7 @@ export function ChatContent({ rounds, chats }: ChatContentProps) {
                         <FileDisplay
                           className="bg-background"
                           filename={p.data.filename ?? "File"}
-                          key={p.data.filename ?? p.data.object_key ?? i}
+                          key={p.data.filename ?? i}
                           mimeType={p.data.mimeType}
                           size={p.data.size}
                         />

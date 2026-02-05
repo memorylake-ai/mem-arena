@@ -18,7 +18,7 @@ export interface PendingStreams {
   providerId: string;
   text: string;
   attachments?: {
-    object_key: string;
+    drive_item_id?: string;
     filename?: string;
     size?: number;
     mimeType?: string;
@@ -35,7 +35,7 @@ export interface ChatUIMessageTextPart {
 export interface ChatUIMessageDataFileRefPart {
   type: "data-file-ref";
   data: {
-    object_key?: string;
+    drive_item_id?: string;
     url?: string;
     filename?: string;
     mimeType?: string;
