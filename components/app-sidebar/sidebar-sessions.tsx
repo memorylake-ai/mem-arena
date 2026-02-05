@@ -143,92 +143,94 @@ export function SidebarSessions() {
 
   return (
     <>
-      <SidebarMenu className="p-2">
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            className="border"
-            render={
-              <Link href="/">
-                <Plus className="size-3" strokeWidth={1.5} />
-                New session
-              </Link>
-            }
-            size="sm"
-            variant="outline"
-          />
-        </SidebarMenuItem>
-      </SidebarMenu>
-      <SidebarGroup>
-        <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
-          Sessions
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {isLoading &&
-              SESSION_SKELETON_KEYS.map((key) => (
-                <SidebarMenuItem key={key}>
-                  <SidebarMenuSkeleton className="h-7 w-full" />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <SidebarMenu className="shrink-0 p-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="border"
+              render={
+                <Link href="/">
+                  <Plus className="size-3" strokeWidth={1.5} />
+                  New session
+                </Link>
+              }
+              size="sm"
+              variant="outline"
+            />
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarGroup className="flex min-h-0 flex-1 flex-col">
+          <SidebarGroupLabel className="shrink-0 group-data-[collapsible=icon]:hidden">
+            Sessions
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="min-h-0 flex-1 overflow-auto">
+            <SidebarMenu>
+              {isLoading &&
+                SESSION_SKELETON_KEYS.map((key) => (
+                  <SidebarMenuItem key={key}>
+                    <SidebarMenuSkeleton className="h-7 w-full" />
+                  </SidebarMenuItem>
+                ))}
+              {!isLoading && sessions.length === 0 && (
+                <SidebarMenuItem>
+                  <div className="px-2 py-4 text-center text-muted-foreground text-sm">
+                    No sessions yet.
+                  </div>
                 </SidebarMenuItem>
-              ))}
-            {!isLoading && sessions.length === 0 && (
-              <SidebarMenuItem>
-                <div className="px-2 py-4 text-center text-muted-foreground text-sm">
-                  No sessions yet.
-                </div>
-              </SidebarMenuItem>
-            )}
-            {!isLoading &&
-              sessions.length > 0 &&
-              sessions.map((session) => (
-                <SidebarMenuItem key={session.id}>
-                  <SidebarMenuButton
-                    isActive={sessionId === session.id}
-                    render={
-                      <Link href={`${SESSION_PATH_PREFIX}${session.id}`}>
-                        <span className="truncate">
-                          {session.title ?? "Untitled"}
-                        </span>
-                      </Link>
-                    }
-                    size="sm"
-                  />
-                  <SidebarMenuAction render={<div />} showOnHover>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        aria-label="Session options"
-                        className="cursor-pointer"
-                      >
-                        <MoreHorizontal
-                          className="size-4 rotate-90"
-                          strokeWidth={1.5}
-                        />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" sideOffset={4}>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            openRenameDialog(session);
-                          }}
+              )}
+              {!isLoading &&
+                sessions.length > 0 &&
+                sessions.map((session) => (
+                  <SidebarMenuItem key={session.id}>
+                    <SidebarMenuButton
+                      isActive={sessionId === session.id}
+                      render={
+                        <Link href={`${SESSION_PATH_PREFIX}${session.id}`}>
+                          <span className="truncate">
+                            {session.title ?? "Untitled"}
+                          </span>
+                        </Link>
+                      }
+                      size="sm"
+                    />
+                    <SidebarMenuAction render={<div />} showOnHover>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          aria-label="Session options"
+                          className="cursor-pointer"
                         >
-                          <Pencil className="size-3.5" />
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            openDeleteDialog(session.id);
-                          }}
-                          variant="destructive"
-                        >
-                          <Trash2 className="size-3.5" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuAction>
-                </SidebarMenuItem>
-              ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+                          <MoreHorizontal
+                            className="size-4 rotate-90"
+                            strokeWidth={1.5}
+                          />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={4}>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              openRenameDialog(session);
+                            }}
+                          >
+                            <Pencil className="size-3.5" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              openDeleteDialog(session.id);
+                            }}
+                            variant="destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </SidebarMenuAction>
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </div>
 
       <Dialog
         onOpenChange={(open) => {
