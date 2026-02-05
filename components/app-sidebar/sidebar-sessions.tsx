@@ -49,7 +49,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SESSION_PATH_PREFIX, sessionIdFromPathname } from "@/lib/session";
 
-const SESSIONS_SWR_KEY = "sessions";
+/** SWR cache key for session list; revalidate this when creating a new session. */
+export const SESSIONS_SWR_KEY = "sessions";
 const SESSION_SKELETON_KEYS = [
   "skeleton-1",
   "skeleton-2",

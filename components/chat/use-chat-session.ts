@@ -4,12 +4,14 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSWRConfig } from "swr";
 import {
   createSession,
   getSessionMessages,
   saveUserMessage,
 } from "@/app/actions/chat";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import { SESSIONS_SWR_KEY } from "@/components/app-sidebar/sidebar-sessions";
 import {
   useMemorylakeProfile,
   useProfile,
@@ -89,6 +91,7 @@ async function runEnsureDocumentsReady(
 export function useChatSession() {
   const pathname = usePathname();
   const router = useRouter();
+  const { mutate: globalMutate } = useSWRConfig();
   const sessionId = sessionIdFromPathname(pathname);
   const providers = getProviders();
   const defaultProviderId = providers[0]?.providerId;
@@ -302,6 +305,17 @@ export function useChatSession() {
     return "ready";
   }, [chats]);
 
+  // Revalidate sidebar session list when stream finishes (API updates session title in onFinish).
+  const statusRef = useRef(status);
+  useEffect(() => {
+    const wasStreaming =
+      statusRef.current === "streaming" || statusRef.current === "submitted";
+    statusRef.current = status;
+    if (wasStreaming && status === "ready" && sessionId) {
+      globalMutate(SESSIONS_SWR_KEY);
+    }
+  }, [status, sessionId, globalMutate]);
+
   const error = useMemo(
     () => chats.map((c) => c.error).find((e) => e != null),
     [chats]
@@ -390,6 +404,7 @@ export function useChatSession() {
 
       if (!sessionId) {
         const { id } = await createSession();
+        globalMutate(SESSIONS_SWR_KEY);
         const key = `${PENDING_STREAMS_KEY}-${id}`;
         try {
           sessionStorage.setItem(
@@ -439,7 +454,7 @@ export function useChatSession() {
       }
       setUploadStatus("idle");
     },
-    [sessionId, providerId, router, chats, user, profile]
+    [sessionId, providerId, router, globalMutate, chats, user, profile]
   );
 
   return {
