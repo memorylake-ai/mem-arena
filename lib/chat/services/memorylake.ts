@@ -1,0 +1,28 @@
+import type { ChatStreamParams, ChatStreamWriter } from "@/lib/chat/types";
+import { parseMemorylakeProfile } from "@/lib/memorylake/profile";
+import { streamMemoryLakeToUIMessageStream } from "@/lib/memorylake/stream";
+
+export function streamMemoryLake(
+  writer: ChatStreamWriter,
+  params: ChatStreamParams
+): void {
+  const baseUrl = process.env.ZOOTOPIA_API;
+  const apiKey = process.env.ZOOTOPIA_API_KEY;
+  if (!(baseUrl && apiKey)) {
+    writer.write({
+      type: "error",
+      errorText:
+        "Memory Lake is not configured (ZOOTOPIA_API, ZOOTOPIA_API_KEY)",
+    });
+    return;
+  }
+  const memorylakeProfile = parseMemorylakeProfile(params.memorylakeProfile);
+  const uiStream = streamMemoryLakeToUIMessageStream({
+    modelId: params.modelId,
+    messages: params.modelMessages,
+    messageId: params.assistantMessageId,
+    messageMetadata: { agentId: params.agentId },
+    ...(memorylakeProfile && { memorylakeProfile }),
+  });
+  writer.merge(uiStream);
+}
