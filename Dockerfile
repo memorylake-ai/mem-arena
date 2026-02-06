@@ -10,6 +10,8 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Build-time .env so next build can load routes that import env (e.g. db client); runtime uses real .env from Helm
+COPY .env.example .env
 RUN bun run build
 
 # Production stage
