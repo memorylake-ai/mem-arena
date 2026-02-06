@@ -7,5 +7,5 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Base path for app when deployed under a subpath (e.g. /arena). Use for client-side fetch URLs. */
 export function getBasePath(): string {
-  return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  return "/arena";
 }
