@@ -3,8 +3,11 @@ import { nanoid } from "nanoid";
 import { db } from "./client";
 import {
   type AgentId,
+  type ArenaSessionUser,
+  arenaSessionUsers,
   type Message,
   messages,
+  type NewArenaSessionUser,
   type NewMessage,
   type NewSession,
   type Session,
@@ -16,12 +19,13 @@ import {
 // ---------------------------------------------------------------------------
 
 export async function createSession(
-  data: Pick<NewSession, "id"> & Partial<Pick<NewSession, "title">>
+  data: Pick<NewSession, "id" | "userId"> & Partial<Pick<NewSession, "title">>
 ): Promise<Session> {
   const [row] = await db
     .insert(sessions)
     .values({
       id: data.id,
+      userId: data.userId,
       title: data.title ?? null,
     })
     .returning();
@@ -36,9 +40,9 @@ export async function getSessionById(id: string): Promise<Session | null> {
   return row ?? null;
 }
 
-export async function listSessions(): Promise<
-  Pick<Session, "id" | "title" | "updatedAt">[]
-> {
+export async function listSessions(
+  userId: string
+): Promise<Pick<Session, "id" | "title" | "updatedAt">[]> {
   return await db
     .select({
       id: sessions.id,
@@ -46,26 +50,79 @@ export async function listSessions(): Promise<
       updatedAt: sessions.updatedAt,
     })
     .from(sessions)
+    .where(eq(sessions.userId, userId))
     .orderBy(desc(sessions.createdAt));
 }
 
 export async function updateSession(
   id: string,
-  data: Partial<Pick<NewSession, "title">>
+  data: Partial<Pick<NewSession, "title">>,
+  userId?: string
 ): Promise<Session | null> {
+  const conditions = userId
+    ? and(eq(sessions.id, id), eq(sessions.userId, userId))
+    : eq(sessions.id, id);
   const [row] = await db
     .update(sessions)
     .set({
       ...data,
       updatedAt: new Date(),
     })
-    .where(eq(sessions.id, id))
+    .where(conditions)
     .returning();
   return row ?? null;
 }
 
-export async function deleteSession(id: string): Promise<void> {
-  await db.delete(sessions).where(eq(sessions.id, id));
+export async function deleteSession(
+  id: string,
+  userId?: string
+): Promise<void> {
+  const conditions = userId
+    ? and(eq(sessions.id, id), eq(sessions.userId, userId))
+    : eq(sessions.id, id);
+  await db.delete(sessions).where(conditions);
+}
+
+// ---------------------------------------------------------------------------
+// Arena session user cache (for getCurrentUser)
+// ---------------------------------------------------------------------------
+
+export async function getArenaSessionUserBySessionKey(
+  sessionKey: string
+): Promise<ArenaSessionUser | null> {
+  const [row] = await db
+    .select()
+    .from(arenaSessionUsers)
+    .where(eq(arenaSessionUsers.sessionKey, sessionKey));
+  return row ?? null;
+}
+
+export async function upsertArenaSessionUser(
+  data: NewArenaSessionUser
+): Promise<ArenaSessionUser> {
+  const [row] = await db
+    .insert(arenaSessionUsers)
+    .values({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: arenaSessionUsers.sessionKey,
+      set: {
+        userId: data.userId,
+        displayName: data.displayName,
+        email: data.email,
+        avatarUrl: data.avatarUrl,
+        metadata: data.metadata,
+        expiresAt: data.expiresAt,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  if (!row) {
+    throw new Error("Failed to upsert arena session user");
+  }
+  return row;
 }
 
 // ---------------------------------------------------------------------------

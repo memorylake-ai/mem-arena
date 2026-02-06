@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { messages, sessions } from "./schema";
+import { arenaSessionUsers, messages, sessions } from "./schema";
 
 const connectionString = process.env.DATABASE_URL;
 const isProductionEnvoriment = process.env.NODE_ENV === "production";
@@ -18,4 +18,6 @@ export const sql = postgres(connectionString, {
 });
 
 /** Drizzle DB instance with schema for typed queries. */
-export const db = drizzle(sql, { schema: { messages, sessions } });
+export const db = drizzle(sql, {
+  schema: { arenaSessionUsers, messages, sessions },
+});

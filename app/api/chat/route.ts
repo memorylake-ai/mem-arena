@@ -15,6 +15,7 @@ import type { ChatStreamWriter } from "@/lib/chat/types";
 import { extractTextFromMessage } from "@/lib/chat/utils";
 import {
   createMessage,
+  getSessionById,
   updateMessage,
   updateMessageContent,
   updateSession,
@@ -64,6 +65,14 @@ export async function POST(req: Request) {
   }
 
   const sessionId = parsed.id;
+  const session = await getSessionById(sessionId);
+  if (!session || session.userId !== userId) {
+    return Response.json(
+      { success: false, message: "Session not found or access denied" },
+      { status: 403 }
+    );
+  }
+
   const messages = parsed.messages;
   const agentId = parsed.agentId;
   const modelId = parsed.modelId;
@@ -109,9 +118,11 @@ export async function POST(req: Request) {
       typeof createUIMessageStream
     >[0]["originalMessages"],
     onFinish: async ({ messages: finalMessages }) => {
-      await updateSession(sessionId, {
-        title: userContent.slice(0, 100) ?? undefined,
-      });
+      await updateSession(
+        sessionId,
+        { title: userContent.slice(0, 100) ?? undefined },
+        userId
+      );
       for (const msg of (finalMessages ?? []) as UIMessage[]) {
         if (msg.role === "assistant" && msg.id) {
           const parts =

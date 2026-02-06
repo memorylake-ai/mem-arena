@@ -1,12 +1,14 @@
 "use server";
 
 import { nanoid } from "nanoid";
+import { getCurrentUser } from "@/app/actions/profile";
 import {
   createMessage as dbCreateMessage,
   createSession as dbCreateSession,
   deleteSession as dbDeleteSession,
   updateSession as dbUpdateSession,
   getMessagesBySessionId,
+  getSessionById,
   listSessions,
 } from "@/lib/db";
 
@@ -21,7 +23,8 @@ export interface SessionListItem {
 }
 
 export async function getSessions(): Promise<SessionListItem[]> {
-  return await listSessions();
+  const user = await getCurrentUser();
+  return await listSessions(user.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -62,8 +65,9 @@ export async function getSessionMessages(
 // ---------------------------------------------------------------------------
 
 export async function createSession(): Promise<{ id: string }> {
+  const user = await getCurrentUser();
   const id = nanoid();
-  await dbCreateSession({ id });
+  await dbCreateSession({ id, userId: user.id });
   return { id };
 }
 
@@ -76,7 +80,12 @@ export async function renameSession(
   title: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const row = await dbUpdateSession(sessionId, { title });
+    const user = await getCurrentUser();
+    const session = await getSessionById(sessionId);
+    if (!session || session.userId !== user.id) {
+      return { ok: false, error: "Session not found or access denied" };
+    }
+    const row = await dbUpdateSession(sessionId, { title }, user.id);
     return { ok: row != null };
   } catch (e) {
     return {
@@ -90,7 +99,12 @@ export async function deleteSession(
   sessionId: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    await dbDeleteSession(sessionId);
+    const user = await getCurrentUser();
+    const session = await getSessionById(sessionId);
+    if (!session || session.userId !== user.id) {
+      return { ok: false, error: "Session not found or access denied" };
+    }
+    await dbDeleteSession(sessionId, user.id);
     return { ok: true };
   } catch (e) {
     return {
