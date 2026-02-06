@@ -147,7 +147,42 @@ helm upgrade mem-arena-app . \
 
 ---
 
-## 8. 验证部署
+## 8. 更新 ConfigMap 环境变量并生效
+
+应用通过 ConfigMap `mem-arena-app-conf` 注入 `.env`（挂载到 `/app/.env`）。修改环境变量后需两步：先更新 ConfigMap，再让 Pod 重新加载。
+
+### 8.1 更新 ConfigMap
+
+**方式 A：改 values 后用 Helm（推荐）**
+
+编辑 `helm/mem-arena/values/production.yaml` 中 `app.*`、`common.dotenvPublicKey` 等，然后：
+
+```bash
+cd helm/mem-arena
+helm upgrade mem-arena-app . -f values/production.yaml -n mem-arena
+```
+
+**方式 B：直接改 ConfigMap**
+
+```bash
+kubectl edit configmap mem-arena-app-conf -n mem-arena
+```
+
+### 8.2 使新环境变量生效
+
+ConfigMap 更新后，挂载到 Pod 内的文件会由 kubelet 在约 1 分钟内同步，但进程在启动时已读取过 `.env`，运行时不会自动重载。**必须重启 Pod** 后新进程才会读到新值。
+
+对 StatefulSet 执行滚动重启：
+
+```bash
+kubectl rollout restart statefulset mem-arena-app -n mem-arena
+```
+
+总结：改 values 或 ConfigMap → `helm upgrade` 或 `kubectl apply` 更新 ConfigMap → `kubectl rollout restart statefulset mem-arena-app` 重启 Pod。
+
+---
+
+## 9. 验证部署
 
 ```bash
 # Pod 状态（期望 Running，Ready 1/1）
