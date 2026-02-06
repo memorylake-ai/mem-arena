@@ -46,11 +46,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -195,6 +190,7 @@ export function PromptInputProvider({
 
   // Keep a ref to attachments for cleanup on unmount (avoids stale closure)
   const attachmentsRef = useRef(attachmentFiles);
+  // eslint-disable-next-line react-hooks/refs
   attachmentsRef.current = attachmentFiles;
 
   // Cleanup blob URLs on unmount to prevent memory leaks
@@ -383,6 +379,7 @@ export const PromptInput = ({
 
   // Keep a ref to files for cleanup on unmount (avoids stale closure)
   const filesRef = useRef(files);
+  // eslint-disable-next-line react-hooks/refs
   filesRef.current = files;
 
   const openFileDialogLocal = useCallback(() => {
@@ -1039,7 +1036,7 @@ export const PromptInputSubmit = ({
     Icon = <XIcon className="size-4" />;
   }
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: Parameters<NonNullable<typeof onClick>>[0]) => {
     if (isGenerating && onStop) {
       e.preventDefault();
       onStop();
@@ -1114,35 +1111,6 @@ export const PromptInputSelectValue = ({
   ...props
 }: PromptInputSelectValueProps) => (
   <SelectValue className={cn(className)} {...props} />
-);
-
-export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
-
-export const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
-  ...props
-}: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
-);
-
-export type PromptInputHoverCardTriggerProps = ComponentProps<
-  typeof HoverCardTrigger
->;
-
-export const PromptInputHoverCardTrigger = (
-  props: PromptInputHoverCardTriggerProps
-) => <HoverCardTrigger {...props} />;
-
-export type PromptInputHoverCardContentProps = ComponentProps<
-  typeof HoverCardContent
->;
-
-export const PromptInputHoverCardContent = ({
-  align = "start",
-  ...props
-}: PromptInputHoverCardContentProps) => (
-  <HoverCardContent align={align} {...props} />
 );
 
 export type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
